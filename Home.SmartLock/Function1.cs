@@ -10,6 +10,8 @@ using Newtonsoft.Json;
 using Home.SmartLock.Helpers;
 using Home.SmartLock.Models;
 using Home.SmartLock.Pages;
+using Home.SmartLock.Services;
+using System.Collections.Generic;
 
 namespace Home.SmartLock
 {
@@ -17,7 +19,7 @@ namespace Home.SmartLock
     {
         [FunctionName("Function1")]
         public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
+            [HttpTrigger(AuthorizationLevel.Function, "get", "post", "patch", "put", "delete", Route = null)] HttpRequest req,
             ILogger log)
         {
             var requestHelper = new RequestHelper(req);
@@ -30,20 +32,40 @@ namespace Home.SmartLock
             switch (lifecycle.ToString())
             {
                 case "PING":
-                    return new OkObjectResult(new { pingData = new { challenge = requestHelper.Payload.challenge } });
+                    return new OkObjectResult(new { pingData = new { challenge = requestHelper.Payload.pingData.challenge } });
                 case "CONFIGURATION":
                     return HandleConfigurationEvent(evt.configurationData);
                 case "INSTALL":
-                    throw new NotSupportedException();
+                    HandleAction(evt.installData);
+                    return new OkResult();
                 case "UNINSTALL":
-                    throw new NotSupportedException();
+                    return new OkResult();
                 case "UPDATE":
-                    throw new NotSupportedException();
+                    HandleAction(evt.updateData);
+                    return new OkResult();
                 case "EVENT":
-                    throw new NotSupportedException();
+                    return new OkResult();
                 default:
                     return new BadRequestObjectResult($"Lifecycle {requestHelper.Payload.lifecycle} not supported");
             }
+        }
+
+        private static void HandleAction(dynamic data)
+        {
+            var client = new SmartThingsClient();
+            var commands = new List<dynamic>
+            {
+                new
+                {
+                    command = "on",
+                    capability = "switch",
+                    component = "main"
+                }
+            };
+            client.Actuate(                
+                data.installedApp.config.colorLight[0].deviceConfig.deviceId.ToString(),
+                data.authToken.ToString(),
+                commands);
         }
 
         private static IActionResult HandleConfigurationEvent(dynamic configurationData)
@@ -52,7 +74,7 @@ namespace Home.SmartLock
             var pageId = configurationData.pageId;
             var settings = configurationData.config;
 
-            switch (phase)
+            switch (phase.ToString())
             {
                 case "INITIALIZE":
                     var initializer = new ConfigurationInitializeSetting
@@ -62,9 +84,9 @@ namespace Home.SmartLock
                         firstPageId = "1",
                         id = "app"
                     };
-                    return new OkObjectResult(new { initialize = initializer });
+                    return new OkObjectResult(new { configurationData = new { initialize = initializer } });
                 case "PAGE":
-                    return new OkObjectResult(new { page = new Page1() });
+                    return new OkObjectResult(new { configurationData = new { page = new Page1() } });
                 default:
                     return new BadRequestObjectResult($"Unsupported config phase: {phase}");
             }

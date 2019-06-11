@@ -26,6 +26,24 @@ namespace Home.SmartLock.Pages
                            required = true
                        }
                     }
+                },
+                new Section
+                {
+                    name = "Set the color of this light",
+                    settings = new List<Setting>
+                    {
+                        new Setting
+                        {
+                            id = "colorLight",
+                            name= "Which color light?",
+                            description = "Tap to set",
+                            type = "DEVICE",
+                            required = true,
+                            multiple = false,
+                            capabilities = new List<string> { "colorControl", "switch", "switchLevel" },
+                            permissions = new List<string> { "r", "x" }
+                        }
+                    }
                 }
             };
         }
