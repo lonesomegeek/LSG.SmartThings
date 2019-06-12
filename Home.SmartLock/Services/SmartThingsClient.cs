@@ -18,5 +18,16 @@ namespace Home.SmartLock.Services
             var response = client.Execute(request, Method.POST);
             return response.Content;
         }
+
+        public string Subscribe(string installedApp, string token, dynamic commands)
+        {
+            var client = new RestClient("https://api.smartthings.com/v1");
+            var request = new RestRequest($"/installedapps/{installedApp}/subscriptions");
+            request.AddJsonBody(commands);
+            request.AddHeader("Content-Type", "application/json");
+            request.AddHeader("Authorization", $"Bearer {token}");
+            var response = client.Execute(request, Method.POST);
+            return response.Content;
+        }
     }
 }

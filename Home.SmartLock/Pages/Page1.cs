@@ -13,35 +13,29 @@ namespace Home.SmartLock.Pages
             this.name = "Test name";
             this.complete = true;
             this.sections = new List<Section> {
-                new Section {
-                    name = "for temp",
-                    settings = new List<Setting>
-                    {
-                       new Setting
-                       {
-                           id ="zipCode",
-                           name = "zipcode",
-                           description = "enter zipcode",
-                           type = "TEXT",
-                           required = true
-                       }
-                    }
-                },
                 new Section
                 {
-                    name = "Set the color of this light",
+                    name = "Lock automatically this door",
                     settings = new List<Setting>
                     {
                         new Setting
                         {
-                            id = "colorLight",
-                            name= "Which color light?",
+                            id = "doorLock",
+                            name= "Which lock?",
                             description = "Tap to set",
                             type = "DEVICE",
                             required = true,
                             multiple = false,
-                            capabilities = new List<string> { "colorControl", "switch", "switchLevel" },
+                            capabilities = new List<string> { "lock" },
                             permissions = new List<string> { "r", "x" }
+                        },
+                        new Setting
+                        {
+                            id = "scheduleInterval",
+                            name = "After how long?",
+                            description = "Type in time in minutes",
+                            type = "NUMBER",
+                            required = true
                         }
                     }
                 }

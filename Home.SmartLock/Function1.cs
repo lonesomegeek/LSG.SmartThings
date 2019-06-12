@@ -36,7 +36,7 @@ namespace Home.SmartLock
                 case "CONFIGURATION":
                     return HandleConfigurationEvent(evt.configurationData);
                 case "INSTALL":
-                    HandleAction(evt.installData);
+                    HandleAction(evt.installData);                    
                     return new OkResult();
                 case "UNINSTALL":
                     return new OkResult();
@@ -44,28 +44,51 @@ namespace Home.SmartLock
                     HandleAction(evt.updateData);
                     return new OkResult();
                 case "EVENT":
+                    HandleEventAction(evt.eventData);
                     return new OkResult();
                 default:
                     return new BadRequestObjectResult($"Lifecycle {requestHelper.Payload.lifecycle} not supported");
             }
         }
 
+        private static void HandleEventAction(dynamic eventData)
+        {
+            // if lock state is unlocked
+        }
+
         private static void HandleAction(dynamic data)
         {
             var client = new SmartThingsClient();
-            var commands = new List<dynamic>
-            {
+            //var commands = new List<dynamic>
+            //{
+            //    new
+            //    {
+            //        command = "on",
+            //        capability = "switch",
+            //        component = "main"
+            //    }
+            //};
+            //client.Actuate(                
+            //    data.installedApp.config.colorLight[0].deviceConfig.deviceId.ToString(),
+            //    data.authToken.ToString(),
+            //    commands);
+
+            client.Subscribe(
+                data.installedApp.installedAppId.ToString(),
+                data.authToken.ToString(),
                 new
                 {
-                    command = "on",
-                    capability = "switch",
-                    component = "main"
-                }
-            };
-            client.Actuate(                
-                data.installedApp.config.colorLight[0].deviceConfig.deviceId.ToString(),
-                data.authToken.ToString(),
-                commands);
+                    sourceType = "DEVICE",
+                    device = new
+                    {
+                        deviceId = "b24fb669-96ff-49b6-9e47-30616533bd6b",
+                        componentId = "*",
+                        capability = "*",
+                        attribute = "*",
+                        stateChangeOnly = true
+                    }
+                });
+
         }
 
         private static IActionResult HandleConfigurationEvent(dynamic configurationData)
