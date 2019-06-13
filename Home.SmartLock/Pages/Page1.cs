@@ -31,6 +31,17 @@ namespace Home.SmartLock.Pages
                         },
                         new Setting
                         {
+                            id = "doorSensor",
+                            name= "Which sensor?",
+                            description = "Tap to set",
+                            type = "DEVICE",
+                            required = true,
+                            multiple = false,
+                            capabilities = new List<string> { "sensor", "contactSensor" },
+                            permissions = new List<string> { "r", "x" }
+                        },
+                        new Setting
+                        {
                             id = "scheduleInterval",
                             name = "After how long?",
                             description = "Type in time in minutes",

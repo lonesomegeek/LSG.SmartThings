@@ -36,7 +36,7 @@ namespace Home.SmartLock
                 case "CONFIGURATION":
                     return HandleConfigurationEvent(evt.configurationData);
                 case "INSTALL":
-                    HandleAction(evt.installData);                    
+                    HandleAction(evt.installData);
                     return new OkResult();
                 case "UNINSTALL":
                     return new OkResult();
@@ -51,9 +51,62 @@ namespace Home.SmartLock
             }
         }
 
-        private static void HandleEventAction(dynamic eventData)
+        private static void HandleEventAction(dynamic data)
         {
             // if lock state is unlocked
+            // start timer "*/X * * * * *"
+            var eventType = data.events[0].eventType.ToString();
+
+            if (eventType == "DEVICE_EVENT")
+            {
+                var deviceEventValue = data.events[0].deviceEvent.value.ToString();
+                if (deviceEventValue == "unlocked")
+                {
+                    var client = new SmartThingsClient();
+                    var installedAppId = data.installedApp.installedAppId.ToString();
+                    var authToken = data.authToken.ToString();
+                    var scheduleInterval = data.installedApp.config.scheduleInterval[0].stringConfig.value;
+
+                    client.Schedule(
+                        installedAppId,
+                        authToken,
+                        new
+                        {
+                            name = "SCHEDULE_DOOR_UNLOCKED",
+                            cron = new
+                            {
+                                expression = $"*/{scheduleInterval} * * * ? *",
+                                timezone = "GMT"
+                            }
+                        });
+                }                
+            } else if (eventType == "TIMER_EVENT")
+            {
+                var timerEventName = data.events[0].timerEvent.name;
+                if (timerEventName == "SCHEDULE_DOOR_UNLOCKED")
+                {
+                    var client = new SmartThingsClient();
+                    var deviceId = data.installedApp.config.doorLock[0].deviceConfig.deviceId.ToString();
+                    var authToken = data.authToken.ToString();
+                    var commands = new
+                    {
+                        commands = new List<dynamic>
+                        {
+                            new
+                            {
+                                component = "main",
+                                capability = "lock",
+                                command = "lock"
+                            }                            
+                        }
+                    };
+                    client.Command(deviceId, authToken, commands);
+                    var installedAppId = data.installedApp.installedAppId.ToString();
+
+                    client.Unschedule(installedAppId, authToken, "SCHEDULE_DOOR_UNLOCKED");
+                    // TODO: delete schedule
+                }
+            }
         }
 
         private static void HandleAction(dynamic data)
