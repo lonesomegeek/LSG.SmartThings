@@ -61,5 +61,15 @@ namespace Home.SmartLock.Services
             var response = client.Execute(request, Method.POST);
             return response.Content;
         }
+
+        public dynamic Status(string deviceId, string token)
+        {
+            var client = new RestClient("https://api.smartthings.com/v1");
+            var request = new RestRequest($"/devices/{deviceId}/status");
+            request.AddHeader("Content-Type", "application/json");
+            request.AddHeader("Authorization", $"Bearer {token}");
+            var response = client.Execute(request, Method.GET);
+            return response.Content;
+        }
     }
 }

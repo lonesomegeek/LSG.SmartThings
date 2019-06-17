@@ -12,12 +12,13 @@ using Home.SmartLock.Models;
 using Home.SmartLock.Pages;
 using Home.SmartLock.Services;
 using System.Collections.Generic;
+using Newtonsoft.Json.Linq;
 
 namespace Home.SmartLock
 {
-    public static class Function1
+    public static class SmartLockFunction
     {
-        [FunctionName("Function1")]
+        [FunctionName("SmartLockFunction")]
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Function, "get", "post", "patch", "put", "delete", Route = null)] HttpRequest req,
             ILogger log)
@@ -60,12 +61,16 @@ namespace Home.SmartLock
             if (eventType == "DEVICE_EVENT")
             {
                 var deviceEventValue = data.events[0].deviceEvent.value.ToString();
+                var client = new SmartThingsClient();
+                var installedAppId = data.installedApp.installedAppId.ToString();
+                var authToken = data.authToken.ToString();
+
                 if (deviceEventValue == "unlocked")
                 {
-                    var client = new SmartThingsClient();
-                    var installedAppId = data.installedApp.installedAppId.ToString();
-                    var authToken = data.authToken.ToString();
-                    var scheduleInterval = data.installedApp.config.scheduleInterval[0].stringConfig.value;
+                    var scheduleInterval = 
+                        DateTime.Now.DayOfWeek >= DayOfWeek.Monday && DateTime.Now.DayOfWeek <= DayOfWeek.Friday ?
+                            data.installedApp.config.scheduleIntervalWeekdays[0].stringConfig.value :
+                            data.installedApp.config.scheduleIntervalWeekenddays[0].stringConfig.value;
 
                     client.Schedule(
                         installedAppId,
@@ -79,32 +84,47 @@ namespace Home.SmartLock
                                 timezone = "GMT"
                             }
                         });
-                }                
-            } else if (eventType == "TIMER_EVENT")
+
+                }
+                else if (deviceEventValue == "locked")
+                {
+                    client.Unschedule(installedAppId, authToken, "SCHEDULE_DOOR_UNLOCKED");
+                }
+            }
+            else if (eventType == "TIMER_EVENT")
             {
                 var timerEventName = data.events[0].timerEvent.name;
                 if (timerEventName == "SCHEDULE_DOOR_UNLOCKED")
                 {
                     var client = new SmartThingsClient();
-                    var deviceId = data.installedApp.config.doorLock[0].deviceConfig.deviceId.ToString();
                     var authToken = data.authToken.ToString();
-                    var commands = new
+
+                    // check if door sensor is on/off
+                    var doorSensorId = data.installedApp.config.doorSensor[0].deviceConfig.deviceId.ToString();
+                    var doorSensorStatus = JObject.Parse(client.Status(doorSensorId, authToken));
+                    if (doorSensorStatus.components.main.relaySwitch["switch"].value.ToString() == "off")
                     {
-                        commands = new List<dynamic>
+                        var doorLockId = data.installedApp.config.doorLock[0].deviceConfig.deviceId.ToString();
+                        var commands = new
+                        {
+                            commands = new List<dynamic>
                         {
                             new
                             {
                                 component = "main",
                                 capability = "lock",
                                 command = "lock"
-                            }                            
+                            }
                         }
-                    };
-                    client.Command(deviceId, authToken, commands);
-                    var installedAppId = data.installedApp.installedAppId.ToString();
+                        };
+                        client.Command(doorLockId, authToken, commands);
+                        var installedAppId = data.installedApp.installedAppId.ToString();
 
-                    client.Unschedule(installedAppId, authToken, "SCHEDULE_DOOR_UNLOCKED");
-                    // TODO: delete schedule
+                        client.Unschedule(installedAppId, authToken, "SCHEDULE_DOOR_UNLOCKED");
+                        // TODO: delete schedule
+                    }
+
+
                 }
             }
         }
