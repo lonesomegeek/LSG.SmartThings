@@ -16,6 +16,7 @@ namespace Home.SmartLock.Helpers
         {
             _request = request;
             string requestBody = new StreamReader(_request.Body).ReadToEnd();
+            string requestHeaderAuthorization = request.Headers["Authorization"];
             Payload = JsonConvert.DeserializeObject(requestBody);
         }
     }
