@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
@@ -17,6 +18,10 @@ namespace Home.SmartLock.Helpers
             _request = request;
             string requestBody = new StreamReader(_request.Body).ReadToEnd();
             string requestHeaderAuthorization = request.Headers["Authorization"];
+            
+            
+
+            var signature = requestHeaderAuthorization.Split(',');
             Payload = JsonConvert.DeserializeObject(requestBody);
         }
     }
