@@ -13,11 +13,13 @@ using Home.SmartLock.Pages;
 using Home.SmartLock.Services;
 using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
+using Home.SmartLock.Functions;
 
 namespace Home.SmartLock
 {
     public static class SmartLockFunction
     {
+
         [FunctionName("SmartLockFunction")]
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Function, "get", "post", "patch", "put", "delete", Route = null)] HttpRequest req,

@@ -1,9 +1,13 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
     <AzureFunctionsVersion>v2</AzureFunctionsVersion>
   </PropertyGroup>
   <ItemGroup>
+    <None Remove="my.pub" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="BouncyCastle.NetCore" Version="1.8.5" />
     <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="1.0.27" />
     <PackageReference Include="RestSharp" Version="106.6.9" />
   </ItemGroup>
@@ -18,5 +22,10 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Initializers\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="my.pub">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 </Project>
