@@ -80,7 +80,7 @@ namespace Home.SmartLock.Functions
                 var doorSensor = installedAppConfig.doorSensor[0];
                 var doorSensorId = doorSensor.deviceConfig.deviceId.ToString();
                 var doorSensorStatus = JObject.Parse(client.Status(doorSensorId, authToken));
-                if (doorSensorStatus.components.main.relaySwitch["switch"].value.ToString() == "off")
+                if (doorSensorStatus.components.main.relaySwitch["switch"].value.ToString() == "on")
                 {
                     var doorLock = installedAppConfig.doorLock[0];
                     var doorLockId = doorLock.deviceConfig.deviceId.ToString();
@@ -111,6 +111,13 @@ namespace Home.SmartLock.Functions
         {
             var client = new SmartThingsClient();
 
+            var eventData = data.eventData;
+            var installedApp = data.installedApp;
+            var installedAppId = installedApp.installedAppId.ToString();
+            var installedAppConfig = installedApp.config;
+            var doorLock = installedAppConfig.doorLock[0];
+            var doorLockId = doorLock.deviceConfig.deviceId.ToString();
+
             client.Subscribe(
                 data.installedApp.installedAppId.ToString(),
                 data.authToken.ToString(),
@@ -119,7 +126,7 @@ namespace Home.SmartLock.Functions
                     sourceType = "DEVICE",
                     device = new
                     {
-                        deviceId = "b24fb669-96ff-49b6-9e47-30616533bd6b",
+                        deviceId = doorLockId,
                         componentId = "*",
                         capability = "*",
                         attribute = "*",

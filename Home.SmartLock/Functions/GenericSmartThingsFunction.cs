@@ -73,9 +73,9 @@ namespace Home.SmartLock.Functions
             switch (eventType)
             {
                 case "DEVICE_EVENT":
-                    return _webhook.EventDeviceEvent(data);
+                    return await _webhook.EventDeviceEvent(data);
                 case "TIMER_EVENT":
-                    return _webhook.EventTimerEvent(data);
+                    return await _webhook.EventTimerEvent(data);
                 default:
                     return new BadRequestObjectResult($"Event type {eventType} not supported");
             }
