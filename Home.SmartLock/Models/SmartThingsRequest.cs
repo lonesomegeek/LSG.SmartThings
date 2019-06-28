@@ -35,38 +35,26 @@ namespace Home.SmartLock.Models
         public string[] permissions { get; set; }
     }
 
-    //public class Config
-    //{
-    //    public Contactsensor[] contactSensor { get; set; }
-    //    public Lightswitch[] lightSwitch { get; set; }
-    //    public Minute[] minutes { get; set; }
-    //}
 
-    public class Contactsensor
+
+    public class SmartLockFunctionConfig
+    {
+        public StringconfigParameter[] scheduleInterval { get; set; }
+        public DeviceconfigParameter[] doorSensor { get; set; }
+        public DeviceconfigParameter[] doorLock { get; set; }
+        public StringconfigParameter[] scheduleIntervalWeekdays { get; set; }
+        public StringconfigParameter[] scheduleIntervalWeekenddays { get; set; }
+
+    }
+
+    public class DeviceconfigParameter
     {
         public string valueType { get; set; }
         public Deviceconfig deviceConfig { get; set; }
+
     }
 
-    public class Deviceconfig
-    {
-        public string deviceId { get; set; }
-        public string componentId { get; set; }
-    }
-
-    public class Lightswitch
-    {
-        public string valueType { get; set; }
-        public Deviceconfig1 deviceConfig { get; set; }
-    }
-
-    public class Deviceconfig1
-    {
-        public string deviceId { get; set; }
-        public string componentId { get; set; }
-    }
-
-    public class Minute
+    public class StringconfigParameter
     {
         public string valueType { get; set; }
         public Stringconfig stringConfig { get; set; }
@@ -75,6 +63,14 @@ namespace Home.SmartLock.Models
     public class Stringconfig
     {
         public string value { get; set; }
+    }
+
+
+
+    public class Deviceconfig
+    {
+        public string deviceId { get; set; }
+        public string componentId { get; set; }
     }
 
     public class Event

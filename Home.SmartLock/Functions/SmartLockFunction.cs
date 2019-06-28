@@ -37,10 +37,11 @@ namespace Home.SmartLock.Functions
 
             if (deviceEventValue == "unlocked")
             {
+                var config = ((JObject)installedApp.config).ToObject<SmartLockFunctionConfig>();
                 var scheduleInterval =
                     DateTime.Now.DayOfWeek >= DayOfWeek.Monday && DateTime.Now.DayOfWeek <= DayOfWeek.Friday ?
-                        installedApp.config.scheduleIntervalWeekdays[0].stringConfig.value :
-                        installedApp.config.scheduleIntervalWeekenddays[0].stringConfig.value;
+                        config.scheduleIntervalWeekdays[0].stringConfig.value :
+                        config.scheduleIntervalWeekenddays[0].stringConfig.value;
 
                 client.Schedule(
                     installedAppId,
