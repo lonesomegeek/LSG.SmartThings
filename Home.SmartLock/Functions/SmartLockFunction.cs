@@ -12,7 +12,7 @@ namespace Home.SmartLock.Functions
 {
     public class SmartLockFunction : ISmartThingsWebhook
     {
-        public async Task<IActionResult> ConfigurationInitialize(dynamic data)
+        public async Task<IActionResult> ConfigurationInitialize(Configurationdata data)
         {
             var initializer = new ConfigurationInitializeSetting
             {
@@ -24,16 +24,16 @@ namespace Home.SmartLock.Functions
             return new OkObjectResult(new { configurationData = new { initialize = initializer } });
         }
 
-        public async Task<IActionResult> ConfigurationPage(dynamic data) => new OkObjectResult(new { configurationData = new { page = new Page1() } });
+        public async Task<IActionResult> ConfigurationPage(Configurationdata data) => new OkObjectResult(new { configurationData = new { page = new Page1() } });
         
-        public async Task<IActionResult> EventDeviceEvent(dynamic data)
+        public async Task<IActionResult> EventDeviceEvent(Eventdata data)
         {
-            var deviceEvent = data.eventData.events[0].deviceEvent;
+            var deviceEvent = data.events[0].deviceEvent;
             var deviceEventValue = deviceEvent.value.ToString();
             var client = new SmartThingsClient();
-            var installedApp = data.eventData.installedApp;
+            var installedApp = data.installedApp;
             var installedAppId = installedApp.installedAppId.ToString();
-            var authToken = data.eventData.authToken.ToString();
+            var authToken = data.authToken.ToString();
 
             if (deviceEventValue == "unlocked")
             {
@@ -63,9 +63,9 @@ namespace Home.SmartLock.Functions
             return new OkResult();
         }
 
-        public async Task<IActionResult> EventTimerEvent(dynamic data)
+        public async Task<IActionResult> EventTimerEvent(Eventdata data)
         {
-            var eventData = data.eventData;
+            var eventData = data;
             var evt = eventData.events[0];
             var timerEventName = evt.timerEvent.name.ToString();
             if (timerEventName == "SCHEDULE_DOOR_UNLOCKED")
@@ -111,9 +111,7 @@ namespace Home.SmartLock.Functions
         {
             var client = new SmartThingsClient();
 
-            var eventData = data.eventData;
             var installedApp = data.installedApp;
-            var installedAppId = installedApp.installedAppId.ToString();
             var installedAppConfig = installedApp.config;
             var doorLock = installedAppConfig.doorLock[0];
             var doorLockId = doorLock.deviceConfig.deviceId.ToString();
@@ -137,7 +135,7 @@ namespace Home.SmartLock.Functions
             return new OkResult();
         }
 
-        public async Task<IActionResult> Uninstall(dynamic data) => new OkResult();        
+        public async Task<IActionResult> Uninstall(Uninstalldata data) => new OkResult();        
 
         public Task<IActionResult> Update(dynamic data) => HandleInstallAndUpdateEvent(data);
     }

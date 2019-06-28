@@ -1,4 +1,5 @@
 ﻿using Home.SmartLock.Helpers;
+using Home.SmartLock.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -21,32 +22,32 @@ namespace Home.SmartLock.Functions
         public async Task<IActionResult> Run(HttpRequest request, ILogger logger)
         {
             var requestHelper = new RequestHelper(request);
-            logger.LogInformation($"{requestHelper.Payload.lifecycle} lifecycle.");
+            var dataRaw = requestHelper.Payload;
+            var data = requestHelper.GetPayloadObject<SmartThingsRequest>();
+
+            logger.LogInformation($"{data.lifecycle} lifecycle.");
             logger.LogDebug($"Body: {requestHelper.Payload.body}");
 
-            var evt = requestHelper.Payload;
-            var lifecycle = evt.lifecycle.ToString();
-
-            switch (lifecycle)
+            switch (data.lifecycle)
             {
                 case "PING":
-                    return new OkObjectResult(new { pingData = new { challenge = requestHelper.Payload.pingData.challenge } });
+                    return new OkObjectResult(new { pingData = new { challenge = data.pingData.challenge } });
                 case "CONFIGURATION":
-                    return await HandleConfiguration(evt.configurationData);
+                    return await HandleConfiguration(data.configurationData);
                 case "INSTALL":
-                    return await _webhook.Install(evt.installData);
+                    return await _webhook.Install(data.installData);
                 case "UNINSTALL":
-                    return await _webhook.Uninstall(evt.uninstallData);
+                    return await _webhook.Uninstall(data.uninstallData);
                 case "UPDATE":
-                    return await _webhook.Update(evt.updateData);                    
+                    return await _webhook.Update(data.updateData);                    
                 case "EVENT":
-                    return await HandleEvent(evt);
+                    return await HandleEvent(data.eventData);
                 default:
-                    return new BadRequestObjectResult($"Lifecycle {requestHelper.Payload.lifecycle} not supported");
+                    return new BadRequestObjectResult($"Lifecycle {data.lifecycle} not supported");
             }
         }
 
-        private async Task<IActionResult> HandleConfiguration(dynamic configurationData)
+        private async Task<IActionResult> HandleConfiguration(Configurationdata configurationData)
         {
 
             var phase = configurationData.phase.ToString();
@@ -65,10 +66,10 @@ namespace Home.SmartLock.Functions
             throw new NotImplementedException();
         }
 
-        public async Task<IActionResult> HandleEvent(dynamic data)
+        public async Task<IActionResult> HandleEvent(Eventdata data)
         {
             // TODO: Support iteration of events
-            var eventData = data.eventData.events[0];
+            var eventData = data.events[0];
             var eventType = eventData.eventType.ToString();
             switch (eventType)
             {
