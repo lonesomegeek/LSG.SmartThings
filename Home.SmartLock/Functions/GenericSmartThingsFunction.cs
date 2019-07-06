@@ -13,20 +13,22 @@ namespace Home.SmartLock.Functions
     public class GenericSmartThingsFunction
     {
         private readonly ISmartThingsWebhook _webhook;
+        private readonly ILogger _logger;
 
-        public GenericSmartThingsFunction(ISmartThingsWebhook webhook)
+        public GenericSmartThingsFunction(ISmartThingsWebhook webhook, ILogger logger)
         {
             _webhook = webhook;
+            _logger = logger;
         }
 
-        public async Task<IActionResult> Run(HttpRequest request, ILogger logger)
+        public async Task<IActionResult> Run(HttpRequest request)
         {
             var requestHelper = new RequestHelper(request);
             var dataRaw = requestHelper.Payload;
             var data = requestHelper.GetPayloadObject<SmartThingsRequest>();
 
-            logger.LogInformation($"{data.lifecycle} lifecycle.");
-            logger.LogDebug($"Body: {requestHelper.Payload.body}");
+            _logger.LogDebug($"{data.lifecycle} lifecycle.");
+            _logger.LogDebug($"Body: {requestHelper.Payload.body}");
 
             switch (data.lifecycle)
             {

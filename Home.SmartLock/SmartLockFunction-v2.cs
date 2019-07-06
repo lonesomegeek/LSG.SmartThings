@@ -25,8 +25,10 @@ namespace Home.SmartLock
     [HttpTrigger(AuthorizationLevel.Function, "get", "post", "patch", "put", "delete", Route = null)] HttpRequest request,
         ILogger logger)
         {
-            var runner = new GenericSmartThingsFunction(new Functions.SmartLockFunction());
-            return await runner.Run(request, logger);
+            var runner = new GenericSmartThingsFunction(
+                new Functions.SmartLockFunction(logger),
+                logger);
+            return await runner.Run(request);
         }
     }
 }

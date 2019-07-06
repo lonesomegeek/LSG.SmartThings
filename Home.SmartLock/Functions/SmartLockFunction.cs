@@ -6,12 +6,22 @@ using Home.SmartLock.Models;
 using Home.SmartLock.Pages;
 using Home.SmartLock.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 
 namespace Home.SmartLock.Functions
 {
     public class SmartLockFunction : ISmartThingsWebhook
     {
+        private readonly ILogger _logger;
+        private readonly SmartThingsClient _client;
+        private readonly string _scheduleName = "SCHEDULE_DOOR_UNLOCKED";
+
+        public SmartLockFunction(ILogger logger)
+        {
+            _logger = logger;
+            _client = new SmartThingsClient();
+        }
         public async Task<IActionResult> ConfigurationInitialize(Configurationdata data)
         {
             var initializer = new ConfigurationInitializeSetting
@@ -30,7 +40,6 @@ namespace Home.SmartLock.Functions
         {
             var deviceEvent = data.events[0].deviceEvent;
             var deviceEventValue = deviceEvent.value.ToString();
-            var client = new SmartThingsClient();
             var installedApp = data.installedApp;
             var installedAppId = installedApp.installedAppId.ToString();
             var authToken = data.authToken.ToString();
@@ -38,28 +47,29 @@ namespace Home.SmartLock.Functions
             if (deviceEventValue == "unlocked")
             {
                 var config = ((JObject)installedApp.config).ToObject<SmartLockFunctionConfig>();
+                var isWeekday = DateTime.Now.DayOfWeek >= DayOfWeek.Monday && DateTime.Now.DayOfWeek <= DayOfWeek.Friday;
                 var scheduleInterval =
-                    DateTime.Now.DayOfWeek >= DayOfWeek.Monday && DateTime.Now.DayOfWeek <= DayOfWeek.Friday ?
+                     isWeekday ?
                         config.scheduleIntervalWeekdays[0].stringConfig.value :
                         config.scheduleIntervalWeekenddays[0].stringConfig.value;
 
-                client.Schedule(
+                _client.Schedule(
                     installedAppId,
                     authToken,
                     new
                     {
-                        name = "SCHEDULE_DOOR_UNLOCKED",
+                        name = _scheduleName,
                         cron = new
                         {
                             expression = $"*/{scheduleInterval} * * * ? *",
                             timezone = "GMT"
                         }
                     });
-
+                _logger.LogInformation($"Locking door event registered for {(isWeekday ? "weekday" : "weekend")} in {scheduleInterval} minutes.");
             }
             else if (deviceEventValue == "locked")
             {
-                client.Unschedule(installedAppId, authToken, "SCHEDULE_DOOR_UNLOCKED");
+                _client.Unschedule(installedAppId, authToken, _scheduleName);
             }
             return new OkResult();
         }
@@ -69,9 +79,8 @@ namespace Home.SmartLock.Functions
             var eventData = data;
             var evt = eventData.events[0];
             var timerEventName = evt.timerEvent.name.ToString();
-            if (timerEventName == "SCHEDULE_DOOR_UNLOCKED")
+            if (timerEventName == _scheduleName)
             {
-                var client = new SmartThingsClient();
                 var authToken = eventData.authToken.ToString();
 
                 // check if door sensor is on/off
@@ -80,7 +89,7 @@ namespace Home.SmartLock.Functions
                 var installedAppConfig = installedApp.config;
                 var doorSensor = installedAppConfig.doorSensor[0];
                 var doorSensorId = doorSensor.deviceConfig.deviceId.ToString();
-                var doorSensorStatus = JObject.Parse(client.Status(doorSensorId, authToken));
+                var doorSensorStatus = JObject.Parse(_client.Status(doorSensorId, authToken));
                 if (doorSensorStatus.components.main.relaySwitch["switch"].value.ToString() == "on")
                 {
                     var doorLock = installedAppConfig.doorLock[0];
@@ -97,9 +106,8 @@ namespace Home.SmartLock.Functions
                             }
                         }
                     };
-                    client.Command(doorLockId, authToken, commands);
-                    client.Unschedule(installedAppId, authToken, "SCHEDULE_DOOR_UNLOCKED");
-                    // TODO: delete schedule
+                    _client.Command(doorLockId, authToken, commands);
+                    _client.Unschedule(installedAppId, authToken, _scheduleName);
                 }
             }
             return new OkResult();
@@ -110,14 +118,12 @@ namespace Home.SmartLock.Functions
 
         private async Task<IActionResult> HandleInstallAndUpdateEvent(dynamic data)
         {
-            var client = new SmartThingsClient();
-
             var installedApp = data.installedApp;
             var installedAppConfig = installedApp.config;
             var doorLock = installedAppConfig.doorLock[0];
             var doorLockId = doorLock.deviceConfig.deviceId.ToString();
 
-            client.Subscribe(
+            _client.Subscribe(
                 data.installedApp.installedAppId.ToString(),
                 data.authToken.ToString(),
                 new
